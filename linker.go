@@ -96,8 +96,8 @@ func initLinker(se *core.ServeEvent) (err error) {
 	})
 
 	// se.Router.GET("/link/status", SaltLinkerStatus)
-	se.Router.GET("/link", SaltLinkerServe)
-	se.Router.Any("/link/{token}", SaltLinker)
+	se.Router.GET("/api/salt-link", SaltLinkerServe)
+	se.Router.Any("/api/salt-link/{token}", SaltLinker)
 	return se.Next()
 }
 
