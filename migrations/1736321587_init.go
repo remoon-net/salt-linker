@@ -50,6 +50,17 @@ func init() {
 				Name:     "token",
 				Required: true,
 			},
+			&core.AutodateField{
+				Id:       "__created__",
+				Name:     "created",
+				OnCreate: true,
+			},
+			&core.AutodateField{
+				Id:       "__updated__",
+				Name:     "updated",
+				OnCreate: true,
+				OnUpdate: true,
+			},
 		)
 		try.To(app.Save(endpoints))
 
@@ -78,6 +89,17 @@ func init() {
 				Id:           "__endpoint__",
 				Name:         "endpoint",
 				CollectionId: endpoints.Id,
+			},
+			&core.AutodateField{
+				Id:       "__created__",
+				Name:     "created",
+				OnCreate: true,
+			},
+			&core.AutodateField{
+				Id:       "__updated__",
+				Name:     "updated",
+				OnCreate: true,
+				OnUpdate: true,
 			},
 		)
 		try.To(app.Save(devices))
@@ -121,6 +143,17 @@ func init() {
 			&core.JSONField{
 				Id:   "__metadata__",
 				Name: "metadata",
+			},
+			&core.AutodateField{
+				Id:       "__created__",
+				Name:     "created",
+				OnCreate: true,
+			},
+			&core.AutodateField{
+				Id:       "__updated__",
+				Name:     "updated",
+				OnCreate: true,
+				OnUpdate: true,
 			},
 		)
 		try.To(app.Save(connections))
