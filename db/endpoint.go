@@ -15,3 +15,5 @@ var _ core.Model = (*Endpoint)(nil)
 const EndpointTable = "endpoints"
 
 func (Endpoint) TableName() string { return EndpointTable }
+
+const DeviceTable = "devices"

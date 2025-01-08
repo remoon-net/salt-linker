@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+	"github.com/google/uuid"
 	"github.com/hashicorp/yamux"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
@@ -24,7 +25,76 @@ import (
 	"remoon.net/salt-linker/db"
 )
 
-func initLinker(se *core.ServeEvent) error {
+func initLinker(se *core.ServeEvent) (err error) {
+	defer err0.Then(&err, nil, nil)
+	app := se.App
+
+	{ //将上次退出时未设置为断开的链接设置为断开
+		d := dbx.Params{"disconnected": types.NowDateTime()}
+		w := dbx.HashExp{"disconnected": ""}
+		q := app.DB().Update(db.ConnectionTable, d, w)
+		try.To1(q.Execute())
+	}
+
+	et := try.To1(app.FindCollectionByNameOrId(db.EndpointTable))
+	app.OnRecordAfterCreateSuccess("devices").BindFunc(func(e *core.RecordEvent) error {
+		app := e.App
+		ep := core.NewRecord(et)
+		ep.Load(map[string]any{
+			"user":   e.Record.GetString("user"),
+			"device": e.Record.Id,
+			"token":  uuid.NewString(),
+		})
+		if err := app.Save(ep); err != nil {
+			return err
+		}
+		e.Record.Set("endpoint", ep.Id)
+		if err := app.Save(e.Record); err != nil {
+			return err
+		}
+		return e.Next()
+	})
+
+	app.OnRecordAfterUpdateSuccess(db.ConnectionTable).BindFunc(func(e *core.RecordEvent) error {
+		disconnected := e.Record.GetDateTime("disconnected")
+		if disconnected.IsZero() {
+			return e.Next()
+		}
+		uid := e.Record.GetString("user")
+		tx := e.Record.GetFloat("transmit_bytes")
+		if err := e.App.RunInTransaction(func(txApp core.App) (err error) {
+			user := try.To1(txApp.FindRecordById(db.UserTable, uid))
+			rb := user.GetFloat("remaining_bytes")
+			rb -= tx
+			user.Set("remaining_bytes", rb)
+			return txApp.Save(user)
+		}); err != nil {
+			return err
+		}
+		return e.Next()
+	})
+	app.OnRecordAfterUpdateSuccess(db.ConnectionTable).BindFunc(func(e *core.RecordEvent) error {
+		disconnected := e.Record.GetDateTime("disconnected")
+		if disconnected.IsZero() {
+			return e.Next()
+		}
+		eid := e.Record.GetString("endpoint")
+		if eid == "" {
+			return e.Next()
+		}
+		tx := e.Record.GetFloat("transmit_bytes")
+		if err := e.App.RunInTransaction(func(txApp core.App) (err error) {
+			ep := try.To1(txApp.FindRecordById(db.EndpointTable, eid))
+			count := ep.GetFloat("transmit_bytes")
+			count += tx
+			ep.Set("transmit_bytes", count)
+			return txApp.Save(ep)
+		}); err != nil {
+			return err
+		}
+		return e.Next()
+	})
+
 	// se.Router.GET("/link/status", SaltLinkerStatus)
 	se.Router.GET("/link", SaltLinkerServe)
 	se.Router.Any("/link/{token}", SaltLinker)
