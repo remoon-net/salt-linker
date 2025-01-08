@@ -38,6 +38,7 @@ func init() {
 				CascadeDelete: true,
 				Required:      true,
 				CollectionId:  users.Id,
+				MaxSelect:     1,
 			},
 			&core.NumberField{
 				Id:      "__transmit_bytes__",
@@ -77,6 +78,7 @@ func init() {
 				CascadeDelete: true,
 				Required:      true,
 				CollectionId:  users.Id,
+				MaxSelect:     1,
 			},
 			&core.TextField{
 				Id:          "__name__",
@@ -89,6 +91,7 @@ func init() {
 				Id:           "__endpoint__",
 				Name:         "endpoint",
 				CollectionId: endpoints.Id,
+				MaxSelect:    1,
 			},
 			&core.AutodateField{
 				Id:       "__created__",
@@ -109,6 +112,7 @@ func init() {
 			Name:          "device",
 			CascadeDelete: false,
 			CollectionId:  devices.Id,
+			MaxSelect:     1,
 		})
 		try.To(app.Save(endpoints))
 
@@ -122,6 +126,7 @@ func init() {
 				CascadeDelete: true,
 				Required:      true,
 				CollectionId:  users.Id,
+				MaxSelect:     1,
 			},
 			&core.RelationField{
 				Id:            "__endpoint__",
@@ -129,6 +134,7 @@ func init() {
 				CascadeDelete: true,
 				Required:      true,
 				CollectionId:  endpoints.Id,
+				MaxSelect:     1,
 			},
 			&core.NumberField{
 				Id:      "__transmit_bytes__",
