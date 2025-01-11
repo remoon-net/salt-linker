@@ -69,7 +69,8 @@ func init() {
 		devices.ListRule = types.Pointer("user = @request.auth.id")
 		devices.ViewRule = types.Pointer("user = @request.auth.id")
 		devices.CreateRule = types.Pointer("user = @request.auth.id")
-		devices.UpdateRule = types.Pointer("user = @request.auth.id")
+		devices.UpdateRule = types.Pointer(`user = @request.auth.id
+&& @request.body.endpoint:isset = false`)
 		devices.DeleteRule = types.Pointer("user = @request.auth.id")
 		devices.Fields.Add(
 			&core.RelationField{
