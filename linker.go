@@ -96,7 +96,7 @@ func initLinker(se *core.ServeEvent) (err error) {
 	})
 
 	// se.Router.GET("/link/status", SaltLinkerStatus)
-	se.Router.GET("/api/salt-link", SaltLinkerServe)
+	se.Router.Any("/api/salt-link", SaltLinkerServe)
 	se.Router.Any("/api/salt-link/{token}", SaltLinker)
 	return se.Next()
 }
@@ -191,6 +191,9 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 
 func SaltLinkerServe(e *core.RequestEvent) error {
 	r := e.Request
+	if r.Method == http.MethodGet {
+		return apis.NewApiError(http.StatusMethodNotAllowed, "只允许非GET请求通过, 避免浏览器注入", nil)
+	}
 	id, _, _ := r.BasicAuth()
 	if id == "" {
 		return apis.NewUnauthorizedError("unkown endpoint", nil)
