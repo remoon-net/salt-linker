@@ -29,7 +29,6 @@ func init() {
 		try.To(app.Save(users))
 
 		endpoints := core.NewBaseCollection("endpoints", "__endpoints__")
-		endpoints.System = true
 		endpoints.ListRule = types.Pointer("user = @request.auth.id")
 		endpoints.ViewRule = types.Pointer("user = @request.auth.id")
 		endpoints.Fields.Add(
@@ -62,7 +61,6 @@ func init() {
 		try.To(app.Save(endpoints))
 
 		devices := core.NewBaseCollection("devices", "__devices__")
-		devices.System = true
 		devices.ListRule = types.Pointer("user = @request.auth.id")
 		devices.ViewRule = types.Pointer("user = @request.auth.id")
 		devices.CreateRule = types.Pointer("user = @request.auth.id")
@@ -109,7 +107,6 @@ func init() {
 		try.To(app.Save(endpoints))
 
 		connections := core.NewBaseCollection("connections", "__connections__")
-		connections.System = true
 		connections.ListRule = types.Pointer("user = @request.auth.id")
 		connections.ViewRule = types.Pointer("user = @request.auth.id")
 		connections.Fields.Add(
