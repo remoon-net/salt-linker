@@ -101,8 +101,7 @@ func init() {
 		try.To(app.Save(devices))
 
 		endpoints.Fields.AddAt(2, &core.RelationField{
-			Id:            "__device__",
-			Name:          "device",
+			Id: "__device__", Name: "device", System: true,
 			CascadeDelete: false,
 			CollectionId:  devices.Id,
 			MaxSelect:     1,
