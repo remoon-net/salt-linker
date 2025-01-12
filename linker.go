@@ -209,6 +209,7 @@ func SaltLinkerServe(prefix string, e *core.RequestEvent) error {
 	if !ok {
 		return apis.NewInternalServerError("there should have a reverse proxy server", nil)
 	}
+	r.Body = NotRereadable(r.Body)
 	http.StripPrefix(prefix, proxy).ServeHTTP(e.Response, r)
 	return nil
 }
@@ -238,4 +239,26 @@ func (rwc *WriteCounter) Write(p []byte) (n int, err error) {
 		rwc.count.Add(int64(n))
 	}
 	return n, err
+}
+
+type NotRereadableBody struct {
+	io.ReadCloser
+	end error
+}
+
+func NotRereadable(body io.ReadCloser) *NotRereadableBody {
+	return &NotRereadableBody{
+		ReadCloser: body,
+	}
+}
+
+func (b *NotRereadableBody) Read(p []byte) (n int, err error) {
+	if b.end != nil {
+		return 0, b.end
+	}
+	n, err = b.ReadCloser.Read(p)
+	if err == io.EOF {
+		b.end = err
+	}
+	return
 }
