@@ -108,11 +108,11 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 	if !strings.HasPrefix(sp, "link") {
 		return apis.NewBadRequestError("subprotocol is bad", nil)
 	}
-	protocols := strings.Split(sp, ", ")
+	protocols := strings.Split(sp, ",")
 	if len(protocols) != 2 {
 		return apis.NewBadRequestError("unkown endpoint", nil)
 	}
-	id := protocols[1]
+	id := strings.TrimSpace(protocols[1])
 	if id == "" {
 		return apis.NewBadRequestError("endpoint is required", nil)
 	}
