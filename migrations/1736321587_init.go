@@ -138,6 +138,7 @@ func init() {
 			},
 			&core.JSONField{
 				Id: "__metadata__", Name: "metadata", System: true,
+				Hidden: true,
 			},
 			&core.AutodateField{
 				Id: "__created__", Name: "created", System: true,
