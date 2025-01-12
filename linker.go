@@ -96,7 +96,9 @@ func initLinker(se *core.ServeEvent) (err error) {
 	})
 
 	// se.Router.GET("/link/status", SaltLinkerStatus)
-	se.Router.Any("/api/salt-link", SaltLinkerServe)
+	se.Router.Any("/api/salt-link", func(e *core.RequestEvent) error {
+		return SaltLinkerServe("/api/salt-link", e)
+	})
 	se.Router.Any("/api/salt-link/{token}", SaltLinker)
 	return se.Next()
 }
@@ -189,7 +191,7 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 	return nil
 }
 
-func SaltLinkerServe(e *core.RequestEvent) error {
+func SaltLinkerServe(prefix string, e *core.RequestEvent) error {
 	r := e.Request
 	id, _, _ := r.BasicAuth()
 	if id == "" {
@@ -207,7 +209,7 @@ func SaltLinkerServe(e *core.RequestEvent) error {
 	if !ok {
 		return apis.NewInternalServerError("there should have a reverse proxy server", nil)
 	}
-	proxy.ServeHTTP(e.Response, r)
+	http.StripPrefix(prefix, proxy).ServeHTTP(e.Response, r)
 	return nil
 }
 
