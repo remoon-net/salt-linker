@@ -22,8 +22,7 @@ func init() {
 && @request.body.remaining_bytes:isset = false`)
 		users.DeleteRule = nil // 不允许删除用户
 		users.Fields.Add(&core.NumberField{
-			Id:      "__remaining_bytes__",
-			Name:    "remaining_bytes",
+			Id: "__remaining_bytes__", Name: "remaining_bytes", System: true,
 			OnlyInt: true,
 		})
 		try.To(app.Save(users))
