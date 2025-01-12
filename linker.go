@@ -191,9 +191,6 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 
 func SaltLinkerServe(e *core.RequestEvent) error {
 	r := e.Request
-	if r.Method == http.MethodGet {
-		return apis.NewApiError(http.StatusMethodNotAllowed, "只允许非GET请求通过, 避免浏览器注入", nil)
-	}
 	id, _, _ := r.BasicAuth()
 	if id == "" {
 		return apis.NewUnauthorizedError("unkown endpoint", nil)
@@ -202,6 +199,9 @@ func SaltLinkerServe(e *core.RequestEvent) error {
 	p, ok := e.App.Store().GetOk(k)
 	if !ok {
 		return apis.NewApiError(http.StatusServiceUnavailable, "device is offline", nil)
+	}
+	if r.Method == http.MethodGet {
+		return apis.NewApiError(http.StatusOK, "device is online", nil)
 	}
 	proxy, ok := p.(*httputil.ReverseProxy)
 	if !ok {
