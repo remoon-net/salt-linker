@@ -19,6 +19,7 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/hook"
 	"github.com/pocketbase/pocketbase/tools/types"
 	"github.com/shynome/err0"
 	"github.com/shynome/err0/try"
@@ -125,6 +126,9 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 	if ep.Token != token {
 		return apis.NewBadRequestError("token is incorrect", nil)
 	}
+	if ep.Device == "" {
+		return apis.NewApiError(http.StatusPreconditionFailed, "this endpoint is unbind device", nil)
+	}
 	w := e.Response
 	socket := try.To1(websocket.Accept(w, r, &websocket.AcceptOptions{
 		OriginPatterns: []string{"*"},
@@ -186,6 +190,16 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 			}
 		}
 	}()
+
+	app.OnRecordAfterDeleteSuccess(db.DeviceTable).Bind(&hook.Handler[*core.RecordEvent]{
+		Func: func(re *core.RecordEvent) error {
+			if re.Record.Id != ep.Device {
+				return nil
+			}
+			go sess.Close()
+			return nil
+		},
+	})
 
 	<-sess.CloseChan()
 	return nil
