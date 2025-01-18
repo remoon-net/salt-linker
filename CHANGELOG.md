@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.4] - 2025-01-19
+
+- 修复: 当 device 删除时关闭对应的 endpoint 连接
+- 修复: endpoint 未绑定 device 时不允许连接
+
 ## [0.0.3] - 2025-01-13
 
 - 修复 WHIP Endpoint 的 Body 可 Reread 和 proxy http.transferWriter 冲突, 通过禁用 Reread 解决
