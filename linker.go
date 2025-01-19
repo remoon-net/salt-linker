@@ -19,7 +19,6 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/tools/hook"
 	"github.com/pocketbase/pocketbase/tools/types"
 	"github.com/shynome/err0"
 	"github.com/shynome/err0/try"
@@ -101,6 +100,19 @@ func initLinker(se *core.ServeEvent) (err error) {
 		return SaltLinkerServe("/api/salt-whip", e)
 	})
 	se.Router.Any("/api/salt-link/{token}", SaltLinker)
+
+	app.OnRecordAfterDeleteSuccess(db.DeviceTable).BindFunc(func(e *core.RecordEvent) error {
+		k := fmt.Sprintf("salt-linker-%s", e.Record.GetString("endpoint"))
+		s, ok := app.Store().GetOk(k)
+		if !ok {
+			return nil
+		}
+		if wp, ok := s.(*WrapperProxy); ok {
+			wp.Cancel()
+		}
+		return nil
+	})
+
 	return se.Next()
 }
 
@@ -135,6 +147,8 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 		Subprotocols:   []string{"link"},
 	}))
 	ctx := r.Context()
+	ctx, cacnel := context.WithCancel(ctx)
+	defer cacnel()
 	conn := websocket.NetConn(ctx, socket, websocket.MessageBinary)
 	rwc := &WriteCounter{ReadWriteCloser: conn}
 	sess := try.To1(yamux.Client(rwc, nil))
@@ -176,7 +190,7 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 		app.Save(connection)
 	}()
 
-	store.Set(k, proxy)
+	store.Set(k, &WrapperProxy{ReverseProxy: proxy, Cancel: cacnel})
 	defer store.Remove(k)
 
 	go func() {
@@ -190,16 +204,6 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 			}
 		}
 	}()
-
-	app.OnRecordAfterDeleteSuccess(db.DeviceTable).Bind(&hook.Handler[*core.RecordEvent]{
-		Func: func(re *core.RecordEvent) error {
-			if re.Record.Id != ep.Device {
-				return nil
-			}
-			go sess.Close()
-			return nil
-		},
-	})
 
 	<-sess.CloseChan()
 	return nil
@@ -219,13 +223,18 @@ func SaltLinkerServe(prefix string, e *core.RequestEvent) error {
 	if r.Method == http.MethodGet {
 		return apis.NewApiError(http.StatusOK, "device is online", nil)
 	}
-	proxy, ok := p.(*httputil.ReverseProxy)
+	proxy, ok := p.(*WrapperProxy)
 	if !ok {
 		return apis.NewInternalServerError("there should have a reverse proxy server", nil)
 	}
 	r.Body = NotRereadable(r.Body)
 	http.StripPrefix(prefix, proxy).ServeHTTP(e.Response, r)
 	return nil
+}
+
+type WrapperProxy struct {
+	*httputil.ReverseProxy
+	Cancel context.CancelFunc
 }
 
 type Metadata struct {
