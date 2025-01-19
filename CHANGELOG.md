@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.0.5] - 2025-01-19
+
+- 修复: 当 device 删除时关闭对应的 endpoint 连接, 使用 app.Store 响应删除事件提升性能
+
 ## [0.0.4] - 2025-01-19
 
 - 修复: 当 device 删除时关闭对应的 endpoint 连接
