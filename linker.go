@@ -120,6 +120,9 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 	defer err0.Then(&err, nil, nil)
 	r := e.Request
 	sp := r.Header.Get("Sec-Websocket-Protocol")
+	if uname, _, _ := r.BasicAuth(); uname != "" {
+		sp = strings.Join([]string{"link", uname}, ",")
+	}
 	if !strings.HasPrefix(sp, "link") {
 		return apis.NewBadRequestError("subprotocol is bad", nil)
 	}
@@ -140,6 +143,9 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 	}
 	if ep.Device == "" {
 		return apis.NewApiError(http.StatusPreconditionFailed, "this endpoint is unbind device", nil)
+	}
+	if r.Method == http.MethodHead { // 检查到这就结束了
+		return e.NoContent(http.StatusNoContent)
 	}
 	w := e.Response
 	socket := try.To1(websocket.Accept(w, r, &websocket.AcceptOptions{
