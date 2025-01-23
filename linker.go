@@ -96,9 +96,22 @@ func initLinker(se *core.ServeEvent) (err error) {
 	})
 
 	// se.Router.GET("/link/status", SaltLinkerStatus)
-	se.Router.Group("/api/salt-whip").Any("/", func(e *core.RequestEvent) error {
-		return SaltLinkerServe("/api/salt-whip", e)
-	})
+	{
+		whips := se.Router.Group("/api/salt-whip").Unbind(
+			apis.DefaultCorsMiddlewareId, // 不应用自带的 cors
+		)
+		cors := apis.CORS(apis.CORSConfig{
+			AllowOrigins:  []string{"*"},
+			ExposeHeaders: []string{"X-WireGuard-Responder", "Location", "ETag"},
+			AllowMethods:  []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+		})
+		whips.Any("/", func(e *core.RequestEvent) error {
+			if uname, _, _ := e.Request.BasicAuth(); uname == "" && e.Request.Method == http.MethodOptions {
+				return cors.Func(e)
+			}
+			return SaltLinkerServe("/api/salt-whip", e)
+		})
+	}
 	se.Router.Any("/api/salt-link/{token}", SaltLinker)
 
 	app.OnRecordAfterDeleteSuccess(db.DeviceTable).BindFunc(func(e *core.RecordEvent) error {
