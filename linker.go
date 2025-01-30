@@ -96,23 +96,8 @@ func initLinker(se *core.ServeEvent) (err error) {
 	})
 
 	// se.Router.GET("/link/status", SaltLinkerStatus)
-	{
-		whips := se.Router.Group("/api/salt-whip").Unbind(
-			apis.DefaultCorsMiddlewareId, // 不应用自带的 cors
-		)
-		cors := apis.CORS(apis.CORSConfig{
-			AllowOrigins:  []string{"*"},
-			ExposeHeaders: []string{"X-WireGuard-Responder", "Location", "ETag"},
-			AllowMethods:  []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
-		})
-		whips.Any("/", func(e *core.RequestEvent) error {
-			if uname, _, _ := e.Request.BasicAuth(); uname == "" && e.Request.Method == http.MethodOptions {
-				return cors.Func(e)
-			}
-			return SaltLinkerServe("/api/salt-whip", e)
-		})
-	}
-	se.Router.Any("/api/salt-link/{token}", SaltLinker)
+	se.Router.Any("/api/salt/whip/{ep}", SaltLinkerServe)
+	se.Router.Any("/api/salt/link/{ep}/{token}", SaltLinker)
 
 	app.OnRecordAfterDeleteSuccess(db.DeviceTable).BindFunc(func(e *core.RecordEvent) error {
 		k := fmt.Sprintf("salt-linker-%s", e.Record.GetString("endpoint"))
@@ -132,44 +117,30 @@ func initLinker(se *core.ServeEvent) (err error) {
 func SaltLinker(e *core.RequestEvent) (err error) {
 	defer err0.Then(&err, nil, nil)
 	r := e.Request
-	sp := r.Header.Get("Sec-Websocket-Protocol")
-	if uname, _, _ := r.BasicAuth(); uname != "" {
-		sp = strings.Join([]string{"link", uname}, ",")
-	}
-	if !strings.HasPrefix(sp, "link") {
-		return apis.NewBadRequestError("subprotocol is bad", nil)
-	}
-	protocols := strings.Split(sp, ",")
-	if len(protocols) != 2 {
-		return apis.NewBadRequestError("unkown endpoint", nil)
-	}
-	id := strings.TrimSpace(protocols[1])
+	w := e.Response
+	socket := try.To1(websocket.Accept(w, r, &websocket.AcceptOptions{
+		OriginPatterns: []string{"*"},
+		Subprotocols:   []string{"link"},
+	}))
+	id := r.PathValue("ep")
 	if id == "" {
-		return apis.NewBadRequestError("endpoint is required", nil)
+		return socket.Close(4000+http.StatusBadRequest, "endpoint is required")
 	}
 	app := e.App
 	var ep db.Endpoint
 	try.To(app.ModelQuery(&ep).Where(dbx.HashExp{"id": id}).One(&ep))
 	token := r.PathValue("token")
 	if ep.Token != token {
-		return apis.NewBadRequestError("token is incorrect", nil)
+		return socket.Close(4000+http.StatusUnauthorized, "token is incorrect")
 	}
 	if ep.Device == "" {
-		return apis.NewApiError(http.StatusPreconditionFailed, "this endpoint is unbind device", nil)
+		return socket.Close(4000+http.StatusPreconditionFailed, "this endpoint is unbind device")
 	}
-	if r.Method == http.MethodHead { // 检查到这就结束了
-		return e.NoContent(http.StatusNoContent)
-	}
-	w := e.Response
-	socket := try.To1(websocket.Accept(w, r, &websocket.AcceptOptions{
-		OriginPatterns: []string{"*"},
-		Subprotocols:   []string{"link"},
-	}))
 	ctx := r.Context()
 	ctx, cacnel := context.WithCancel(ctx)
 	defer cacnel()
 	conn := websocket.NetConn(ctx, socket, websocket.MessageBinary)
-	rwc := &WriteCounter{ReadWriteCloser: conn}
+	rwc := &RWCounter{ReadWriteCloser: conn}
 	sess := try.To1(yamux.Client(rwc, nil))
 	defer sess.Close()
 
@@ -228,9 +199,9 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 	return nil
 }
 
-func SaltLinkerServe(prefix string, e *core.RequestEvent) error {
+func SaltLinkerServe(e *core.RequestEvent) error {
 	r := e.Request
-	id, _, _ := r.BasicAuth()
+	id := r.PathValue("ep")
 	if id == "" {
 		return apis.NewUnauthorizedError("unkown endpoint", nil)
 	}
@@ -239,15 +210,17 @@ func SaltLinkerServe(prefix string, e *core.RequestEvent) error {
 	if !ok {
 		return apis.NewApiError(http.StatusServiceUnavailable, "device is offline", nil)
 	}
-	if r.Method == http.MethodGet {
-		return apis.NewApiError(http.StatusOK, "device is online", nil)
+	// 只允许 WebScoket 连接
+	if upgrade := r.Header.Get("Upgrade"); !strings.EqualFold(upgrade, "websocket") {
+		e.Response.Header().Set("Upgrade", "websocket")
+		return apis.NewApiError(http.StatusUpgradeRequired, "device is online (only allow websocket connection)", nil)
 	}
 	proxy, ok := p.(*WrapperProxy)
 	if !ok {
 		return apis.NewInternalServerError("there should have a reverse proxy server", nil)
 	}
 	r.Body = NotRereadable(r.Body)
-	http.StripPrefix(prefix, proxy).ServeHTTP(e.Response, r)
+	proxy.ServeHTTP(e.Response, r)
 	return nil
 }
 
@@ -263,20 +236,29 @@ type Metadata struct {
 	Header     http.Header
 }
 
-type WriteCounter struct {
+// 双向计费, 因为 Read 也是出流量 client->server->linker, Write 则是 linker->server->client
+type RWCounter struct {
 	io.ReadWriteCloser
 	count atomic.Int64
 }
 
-func (rwc *WriteCounter) Count() float64 {
+func (rwc *RWCounter) Count() float64 {
 	c := rwc.count.Load()
 	return float64(c)
 }
 
-var _ io.Writer = (*WriteCounter)(nil)
+var _ io.ReadWriter = (*RWCounter)(nil)
 
-func (rwc *WriteCounter) Write(p []byte) (n int, err error) {
+func (rwc *RWCounter) Write(p []byte) (n int, err error) {
 	n, err = rwc.ReadWriteCloser.Write(p)
+	if err == nil {
+		rwc.count.Add(int64(n))
+	}
+	return n, err
+}
+
+func (rwc *RWCounter) Read(p []byte) (n int, err error) {
+	n, err = rwc.ReadWriteCloser.Read(p)
 	if err == nil {
 		rwc.count.Add(int64(n))
 	}
