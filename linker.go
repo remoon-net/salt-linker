@@ -13,7 +13,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/coder/websocket"
 	"github.com/google/uuid"
 	"github.com/hashicorp/yamux"
 	"github.com/pocketbase/dbx"
@@ -22,6 +21,7 @@ import (
 	"github.com/pocketbase/pocketbase/tools/types"
 	"github.com/shynome/err0"
 	"github.com/shynome/err0/try"
+	"github.com/shynome/websocket"
 	"remoon.net/salt-linker/db"
 )
 

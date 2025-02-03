@@ -3,12 +3,12 @@ module remoon.net/salt-linker
 go 1.23.3
 
 require (
-	github.com/coder/websocket v1.8.12
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/yamux v0.1.2
 	github.com/pocketbase/dbx v1.11.0
 	github.com/pocketbase/pocketbase v0.24.1
 	github.com/shynome/err0 v0.2.1
+	github.com/shynome/websocket v1.9.0
 )
 
 require (
