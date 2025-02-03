@@ -155,8 +155,10 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 	store := app.Store()
 	k := fmt.Sprintf("salt-linker-%s", id)
 	if _, ok := store.GetOk(k); ok {
-		return socket.Close(websocket.StatusAbnormalClosure, "device is already connected")
+		return socket.Close(4000+http.StatusLocked, "device is already connected")
 	}
+	store.Set(k, &WrapperProxy{ReverseProxy: proxy, Cancel: cacnel})
+	defer store.Remove(k)
 
 	metadata := try.To1(json.Marshal(Metadata{
 		Method:     r.Method,
@@ -179,9 +181,6 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 		connection.Set("disconnected", types.NowDateTime())
 		app.Save(connection)
 	}()
-
-	store.Set(k, &WrapperProxy{ReverseProxy: proxy, Cancel: cacnel})
-	defer store.Remove(k)
 
 	go func() {
 		for {
