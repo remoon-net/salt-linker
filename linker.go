@@ -96,8 +96,8 @@ func initLinker(se *core.ServeEvent) (err error) {
 	})
 
 	// se.Router.GET("/link/status", SaltLinkerStatus)
-	se.Router.Any("/api/salt/whip/{ep}", SaltLinkerServe)
-	se.Router.Any("/api/salt/link/{ep}/{token}", SaltLinker)
+	se.Router.GET("/api/salt/whip/{ep}", SaltLinkerServe)
+	se.Router.GET("/api/salt/link/{ep}/{token}", SaltLinker)
 
 	app.OnRecordAfterDeleteSuccess(db.DeviceTable).BindFunc(func(e *core.RecordEvent) error {
 		k := fmt.Sprintf("salt-linker-%s", e.Record.GetString("endpoint"))
