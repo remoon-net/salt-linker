@@ -14,7 +14,7 @@ func init() {
 		defer err0.Then(&err, nil, nil)
 
 		users := try.To1(app.FindCollectionByNameOrId("users"))
-		users.CreateRule = nil // 禁止用户自行注册, 如果要开发注册, 请自行修改Rule为 ""
+		users.CreateRule = nil // 禁止用户自行注册, 如果要开放注册, 请自行修改Rule为 ""
 		try.To(app.Save(users))
 
 		return
