@@ -162,7 +162,7 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 
 	metadata := try.To1(json.Marshal(Metadata{
 		Method:     r.Method,
-		RemoteAddr: r.RemoteAddr,
+		RemoteAddr: e.RealIP(),
 		RequestURI: r.RequestURI,
 		Header:     r.Header,
 	}))
