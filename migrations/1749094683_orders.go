@@ -145,7 +145,7 @@ func init() {
 			items.Fields.AddAt(getFieldIndex(items, "user")+1,
 				&core.RelationField{
 					Name: "order", Id: ID("order"), System: true,
-					CollectionId: orders.Id, MaxSelect: 1,
+					CollectionId: orders.Id, MaxSelect: 1, CascadeDelete: true,
 				},
 			)
 			try.To(app.Save(items))
