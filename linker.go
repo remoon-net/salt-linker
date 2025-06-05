@@ -32,11 +32,11 @@ func initLinker(se *core.ServeEvent) (err error) {
 	{ //将上次退出时未设置为断开的链接设置为断开
 		d := dbx.Params{"disconnected": types.NowDateTime()}
 		w := dbx.HashExp{"disconnected": ""}
-		q := app.DB().Update(db.ConnectionTable, d, w)
+		q := app.DB().Update(db.TableConnections, d, w)
 		try.To1(q.Execute())
 	}
 
-	et := try.To1(app.FindCollectionByNameOrId(db.EndpointTable))
+	et := try.To1(app.FindCollectionByNameOrId(db.TableEndpoints))
 	app.OnRecordAfterCreateSuccess("devices").BindFunc(func(e *core.RecordEvent) error {
 		app := e.App
 		ep := core.NewRecord(et)
@@ -55,7 +55,7 @@ func initLinker(se *core.ServeEvent) (err error) {
 		return e.Next()
 	})
 
-	app.OnRecordAfterUpdateSuccess(db.ConnectionTable).BindFunc(func(e *core.RecordEvent) error {
+	app.OnRecordAfterUpdateSuccess(db.TableConnections).BindFunc(func(e *core.RecordEvent) error {
 		disconnected := e.Record.GetDateTime("disconnected")
 		if disconnected.IsZero() {
 			return e.Next()
@@ -63,7 +63,7 @@ func initLinker(se *core.ServeEvent) (err error) {
 		uid := e.Record.GetString("user")
 		tx := e.Record.GetFloat("transmit_bytes")
 		if err := e.App.RunInTransaction(func(txApp core.App) (err error) {
-			user := try.To1(txApp.FindRecordById(db.UserTable, uid))
+			user := try.To1(txApp.FindRecordById(db.TableUsers, uid))
 			rb := user.GetFloat("remaining_bytes")
 			rb -= tx
 			user.Set("remaining_bytes", rb)
@@ -73,7 +73,7 @@ func initLinker(se *core.ServeEvent) (err error) {
 		}
 		return e.Next()
 	})
-	app.OnRecordAfterUpdateSuccess(db.ConnectionTable).BindFunc(func(e *core.RecordEvent) error {
+	app.OnRecordAfterUpdateSuccess(db.TableConnections).BindFunc(func(e *core.RecordEvent) error {
 		disconnected := e.Record.GetDateTime("disconnected")
 		if disconnected.IsZero() {
 			return e.Next()
@@ -84,7 +84,7 @@ func initLinker(se *core.ServeEvent) (err error) {
 		}
 		tx := e.Record.GetFloat("transmit_bytes")
 		if err := e.App.RunInTransaction(func(txApp core.App) (err error) {
-			ep := try.To1(txApp.FindRecordById(db.EndpointTable, eid))
+			ep := try.To1(txApp.FindRecordById(db.TableEndpoints, eid))
 			count := ep.GetFloat("transmit_bytes")
 			count += tx
 			ep.Set("transmit_bytes", count)
@@ -167,7 +167,7 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 		Header:     r.Header,
 	}))
 
-	c := try.To1(app.FindCollectionByNameOrId(db.ConnectionTable))
+	c := try.To1(app.FindCollectionByNameOrId(db.TableConnections))
 	connection := core.NewRecord(c)
 	connection.Load(map[string]any{
 		"user":     ep.User,
