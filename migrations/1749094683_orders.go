@@ -227,7 +227,6 @@ func init() {
 			},
 			&core.RelationField{
 				Name: "coupons", Id: ID("coupons"), System: true,
-				Required:     true,
 				CollectionId: couponIssued.Id, MaxSelect: 99999,
 			},
 			&core.JSONField{
