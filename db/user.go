@@ -9,6 +9,4 @@ type User struct {
 
 var _ core.Model = (*User)(nil)
 
-const UserTable = "users"
-
-func (User) TableName() string { return UserTable }
+func (User) TableName() string { return TableUsers }

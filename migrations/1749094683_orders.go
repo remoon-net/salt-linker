@@ -18,7 +18,7 @@ func init() {
 
 		users := try.To1(app.FindCollectionByNameOrId("users"))
 
-		goods := core.NewBaseCollection("goods", ID("goods"))
+		goods := core.NewBaseCollection(db.TableGoods, ID(db.TableGoods))
 		goods.ViewRule = types.Pointer("")
 		goods.ListRule = types.Pointer("hide = false")
 		goods.Fields.Add(
@@ -51,7 +51,7 @@ func init() {
 		addUpdatedFields(&goods.Fields)
 		try.To(app.Save(goods))
 
-		coupon := core.NewBaseCollection("coupon", ID("coupon"))
+		coupon := core.NewBaseCollection(db.TableCoupon, ID(db.TableCoupon))
 		coupon.ViewRule = types.Pointer("")
 		coupon.Fields.Add(
 			&core.TextField{
@@ -77,7 +77,7 @@ func init() {
 
 		var orders *core.Collection
 
-		couponIssued := core.NewBaseCollection("coupon_issued", ID("coupon_issued"))
+		couponIssued := core.NewBaseCollection(db.TableCouponIssued, ID(db.TableCouponIssued))
 		couponIssued.ListRule = types.Pointer("@request.auth.id = user")
 		couponIssued.ViewRule = types.Pointer("@request.auth.id = user")
 		couponIssued.Fields.Add(
@@ -110,7 +110,7 @@ func init() {
 		addUpdatedFields(&couponIssued.Fields)
 		try.To(app.Save(couponIssued))
 
-		items := core.NewBaseCollection("order_items", ID("order_items"))
+		items := core.NewBaseCollection(db.TableOrderItems, ID(db.TableOrderItems))
 		items.ListRule = types.Pointer("@request.auth.id = user")
 		items.ViewRule = types.Pointer("@request.auth.id = user")
 		items.CreateRule = types.Pointer(`@request.auth.id = user && @request.body.order:isset = false`)
@@ -153,7 +153,7 @@ func init() {
 		addUpdatedFields(&items.Fields)
 		try.To(app.Save(items))
 
-		express := core.NewBaseCollection("express", ID("express"))
+		express := core.NewBaseCollection(db.TableExpress, ID(db.TableExpress))
 		express.ListRule = types.Pointer("@request.auth.id = user")
 		express.ViewRule = types.Pointer("@request.auth.id = user")
 		express.Fields.Add(
@@ -192,7 +192,7 @@ func init() {
 		addUpdatedFields(&express.Fields)
 		try.To(app.Save(express))
 
-		orders = core.NewBaseCollection("orders", ID("orders"))
+		orders = core.NewBaseCollection(db.TableOrders, ID(db.TableOrders))
 		orders.ListRule = types.Pointer("@request.auth.id = user")
 		orders.ViewRule = types.Pointer("@request.auth.id = user")
 		orders.CreateRule = types.Pointer("@request.auth.id = user")

@@ -12,8 +12,6 @@ type Endpoint struct {
 
 var _ core.Model = (*Endpoint)(nil)
 
-const EndpointTable = "endpoints"
-
-func (Endpoint) TableName() string { return EndpointTable }
+func (Endpoint) TableName() string { return TableEndpoints }
 
 const DeviceTable = "devices"

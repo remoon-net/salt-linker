@@ -16,6 +16,4 @@ type Connection struct {
 
 var _ core.Model = (*Connection)(nil)
 
-const ConnectionTable = "connections"
-
-func (Connection) TableName() string { return ConnectionTable }
+func (Connection) TableName() string { return TableConnections }
