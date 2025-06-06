@@ -12,9 +12,23 @@ import (
 	_ "remoon.net/salt-linker/migrations"
 )
 
+var args struct {
+	PSC        string
+	LicenseKey []byte
+}
+
 func main() {
 	app := pocketbase.New()
+
+	{
+		flags := app.RootCmd.PersistentFlags()
+		flags.StringVar(&args.PSC, "psc", "", "支付中心的接口地址, WebSocket 链接")
+		flags.BytesBase64Var(&args.LicenseKey, "license-key", nil, "生成 license 的 key, base64编码")
+	}
+
 	app.OnServe().BindFunc(initLinker)
+	app.OnServe().BindFunc(initOrders)
+	app.OnServe().BindFunc(initPSC)
 
 	var publicDir string
 	app.RootCmd.PersistentFlags().StringVar(
