@@ -70,7 +70,7 @@ func computeItemValue(e *core.RecordRequestEvent) (err error) {
 	price := goods.GetFloat("price")
 	value := num * price
 	item.Set("value", value)
-	return nil
+	return e.Next()
 }
 
 var emptyJSONValues = []string{
