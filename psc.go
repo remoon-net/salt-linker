@@ -92,6 +92,7 @@ func initPSC(e *core.ServeEvent) (err error) {
 					})
 				}
 				ss = append(ss, string(db.OrderStatusClosed))
+				order.Set("status", ss)
 				try.To(txApp.Save(order))
 				return nil
 			})
