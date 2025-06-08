@@ -121,7 +121,12 @@ func execHook(app core.App, pool *sync.Pool, item *core.Record) (err error) {
 	s = hookjs.FixAlmondDefine(f, s)
 	try.To1(vm.RunScript(f, s))
 
-	try.To1(vm.RunScript(f+"-call", fmt.Sprintf(`requirejs(["%s"], cb=>cb("%s"))`, f, item.Id)))
+	exports := try.To1(vm.RunString(fmt.Sprintf(`requirejs("%s")`, f)))
+	callback, ok := goja.AssertFunction(exports)
+	if !ok {
+		return fmt.Errorf("hookjs module.exports must be function")
+	}
+	try.To1(callback(goja.Undefined(), vm.ToValue(item)))
 
 	item.Set("executed", types.NowDateTime())
 	try.To(app.Save(item))
