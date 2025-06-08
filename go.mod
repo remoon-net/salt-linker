@@ -6,6 +6,7 @@ require (
 	github.com/avast/retry-go/v4 v4.6.1
 	github.com/docker/go-units v0.5.0
 	github.com/dop251/goja v0.0.0-20250309171923-bcd7cc6bf64c
+	github.com/dop251/goja_nodejs v0.0.0-20250314160716-c55ecee183c0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/yamux v0.1.2
 	github.com/pocketbase/dbx v1.11.0
@@ -22,7 +23,6 @@ require (
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/domodwyer/mailyak/v3 v3.6.2 // indirect
 	github.com/dop251/base64dec v0.0.0-20231022112746-c6c9f9a96217 // indirect
-	github.com/dop251/goja_nodejs v0.0.0-20250314160716-c55ecee183c0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect

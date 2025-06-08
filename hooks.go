@@ -32,6 +32,8 @@ func initHooks(se *core.ServeEvent) (err error) {
 			vm.SetFieldNameMapper(jsvm.FieldMapper{})
 			vm.Set("$app", se.App)
 
+			vm.Set("GenLicense", GenLicense)
+
 			try.To1(vm.RunProgram(hookjs.AlmondProg))
 			return vm
 		},

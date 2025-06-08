@@ -27,6 +27,7 @@ func main() {
 	}
 
 	app.OnServe().BindFunc(initLinker)
+	app.OnServe().BindFunc(initLicenses)
 	app.OnServe().BindFunc(initOrders)
 	app.OnServe().BindFunc(initPSC)
 	app.OnServe().BindFunc(initHooks)
