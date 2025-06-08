@@ -50,6 +50,10 @@ func initOrders(e *core.ServeEvent) (err error) {
 	})
 	e.App.OnRecordDeleteRequest(db.TableOrders).BindFunc(func(e *core.RecordRequestEvent) (err error) {
 		defer err0.Then(&err, nil, nil)
+		info := try.To1(e.RequestInfo())
+		if info.Auth.IsSuperuser() {
+			return e.Next()
+		}
 		order := e.Record
 		ss := order.GetStringSlice("status")
 		ss = append(ss, string(db.OrderStatusClosed))
