@@ -29,6 +29,7 @@ func main() {
 	app.OnServe().BindFunc(initLinker)
 	app.OnServe().BindFunc(initOrders)
 	app.OnServe().BindFunc(initPSC)
+	app.OnServe().BindFunc(initHooks)
 
 	var publicDir string
 	app.RootCmd.PersistentFlags().StringVar(
