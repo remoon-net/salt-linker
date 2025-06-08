@@ -45,6 +45,7 @@ func main() {
 		ctx := r.Context()
 		conn := websocket.NetConn(ctx, socket, websocket.MessageBinary)
 		sess, _ := yamux.Server(conn, nil)
+		defer sess.Close()
 		hc := &http.Client{
 			Transport: &http.Transport{
 				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
