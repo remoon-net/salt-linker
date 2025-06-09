@@ -1,12 +1,16 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"slices"
 	"strings"
 
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/types"
+	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/shynome/err0"
 	"github.com/shynome/err0/try"
 	"remoon.net/salt-linker/db"
@@ -29,6 +33,60 @@ func initOrders(e *core.ServeEvent) (err error) {
 		for _, item := range items {
 			itemValue := item.GetFloat("value")
 			value = value + itemValue
+		}
+
+		// verify address
+		gIds := []string{}
+		for _, item := range items {
+			gIds = append(gIds, item.GetString("goods"))
+		}
+		goods := try.To1(e.App.FindRecordsByIds(db.TableGoods, gIds))
+
+		schemas := map[string]string{}
+		for _, g := range goods {
+			sid := g.GetString("schema")
+			if sid == "" {
+				continue
+			}
+			schema := try.To1(e.App.FindRecordById(db.TableSchemas, sid))
+			schemas[g.Id] = schema.GetString("schema")
+		}
+
+		addrs := map[string]json.RawMessage{}
+		try.To(json.Unmarshal([]byte(order.GetString("address")), &addrs))
+
+		compiler := jsonschema.NewCompiler()
+		for _, item := range items {
+			gid := item.GetString("goods")
+			schemaRaw, ok := schemas[gid]
+			if !ok {
+				continue
+			}
+
+			var g *core.Record
+			if idx := slices.IndexFunc(goods, func(item *core.Record) bool { return item.Id == gid }); idx != -1 {
+				g = goods[idx]
+			}
+			gDisplay := gid
+			if g != nil {
+				gDisplay = g.GetString("name")
+			}
+
+			addrRaw, ok := addrs[item.Id]
+			if !ok {
+				msg := fmt.Sprintf("商品(%s)要求地址输入, 但没有对应项的地址输入", gDisplay)
+				return apis.NewBadRequestError(msg, nil)
+			}
+
+			res := try.To1(jsonschema.UnmarshalJSON(strings.NewReader(schemaRaw)))
+			try.To(compiler.AddResource(gid, res))
+			schema := try.To1(compiler.Compile(gid))
+			var v any
+			try.To(json.Unmarshal(addrRaw, &v))
+			if err := schema.Validate(v); err != nil {
+				msg := fmt.Sprintf("未通过商品(%s)的地址输入验证. 错误原因: %s", gDisplay, err.Error())
+				return apis.NewBadRequestError(msg, err)
+			}
 		}
 
 		// 这里应该计算 coupons 的, 但没有coupons所以不用计算

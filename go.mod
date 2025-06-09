@@ -11,6 +11,7 @@ require (
 	github.com/hashicorp/yamux v0.1.2
 	github.com/pocketbase/dbx v1.11.0
 	github.com/pocketbase/pocketbase v0.28.2
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/shynome/err0 v0.2.1
 	github.com/shynome/websocket v1.9.1
 	golang.org/x/sync v0.14.0
