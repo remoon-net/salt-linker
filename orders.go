@@ -126,12 +126,22 @@ func initOrders(e *core.ServeEvent) (err error) {
 
 func computeItemValue(e *core.RecordRequestEvent) (err error) {
 	defer err0.Then(&err, nil, nil)
+
 	item := e.Record
 	goods := try.To1(e.App.FindRecordById(db.TableGoods, item.GetString("goods")))
-	num := item.GetFloat("num")
-	price := goods.GetFloat("price")
+
+	// 添加 item_num 数量限制, 因为有些商品的 hookjs 只支持单个商品, 数量超过一个时也只处理一个
+	limit := goods.GetInt("item_num_limit")
+	num := item.GetInt("num")
+	if limit > 0 && num > limit {
+		num = limit
+		item.Set("num", num)
+	}
+
+	price := goods.GetInt("price")
 	value := num * price
 	item.Set("value", value)
+
 	return e.Next()
 }
 
