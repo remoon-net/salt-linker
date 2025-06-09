@@ -29,7 +29,7 @@ func initHooks(se *core.ServeEvent) (err error) {
 		New: func() any {
 			vm := goja.New()
 
-			vm.SetFieldNameMapper(jsvm.FieldMapper{})
+			baseBind(vm)
 			vm.Set("$app", se.App)
 
 			vm.Set("GenLicense", GenLicense)
@@ -134,4 +134,28 @@ func execHook(app core.App, pool *sync.Pool, item *core.Record) (err error) {
 	try.To(app.Save(item))
 
 	return nil
+}
+
+func baseBind(vm *goja.Runtime) {
+	vm.SetFieldNameMapper(jsvm.FieldMapper{})
+
+	vm.Set("Record", func(call goja.ConstructorCall) *goja.Object {
+		var instance *core.Record
+
+		collection, ok := call.Argument(0).Export().(*core.Collection)
+		if ok {
+			instance = core.NewRecord(collection)
+			data, ok := call.Argument(1).Export().(map[string]any)
+			if ok {
+				instance.Load(data)
+			}
+		} else {
+			instance = &core.Record{}
+		}
+
+		instanceValue := vm.ToValue(instance).(*goja.Object)
+		instanceValue.SetPrototype(call.This.Prototype())
+
+		return instanceValue
+	})
 }
