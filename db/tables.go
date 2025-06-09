@@ -6,6 +6,7 @@ const (
 	TableConnections = "connections"
 
 	TableGoods        = "goods"
+	TableSchemas      = "schemas"
 	TableCoupon       = "coupon"
 	TableCouponIssued = "coupon_issued"
 
