@@ -30,5 +30,5 @@ func GenLicense(pubkey string) string {
 		return ""
 	}
 	sig := ed25519.Sign(licenseKey, []byte(pubkey))
-	return base64.RawStdEncoding.EncodeToString(sig)
+	return base64.StdEncoding.EncodeToString(sig)
 }

@@ -40,7 +40,7 @@ func TestGenLicense(t *testing.T) {
 		return
 	}
 
-	sig := try.To1(base64.RawStdEncoding.DecodeString(s1))
+	sig := try.To1(base64.StdEncoding.DecodeString(s1))
 	pubkey := licenseKey.Public().(ed25519.PublicKey)
 	valid := ed25519.Verify(pubkey, []byte(msg), sig)
 	if !valid {
@@ -48,6 +48,6 @@ func TestGenLicense(t *testing.T) {
 		return
 	}
 
-	pubkeyStr := base64.RawStdEncoding.EncodeToString(pubkey)
+	pubkeyStr := base64.StdEncoding.EncodeToString(pubkey)
 	t.Log(pubkeyStr)
 }
