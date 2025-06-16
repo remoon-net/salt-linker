@@ -14,9 +14,7 @@ import (
 // 不允许使用已被使用了的订单项或优惠券, 不能使用其他人的订单项和券
 const t1749137729OrdersCreateRule = `@request.auth.id = user 
 && items.order = "" 
-&& items.user = @request.auth.id
-&& coupons.order = ""
-&& coupons.user = @request.auth.id`
+&& items.user = @request.auth.id`
 
 // 已关闭的订单不再允许进行操作
 const t1749137729OrdersDeleteRule = `@request.auth.id = user 
