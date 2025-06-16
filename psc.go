@@ -130,6 +130,11 @@ func initPSC(e *core.ServeEvent) (err error) {
 	e.App.OnRecordUpdateRequest(db.TableOrders).BindFunc(func(e *core.RecordRequestEvent) (err error) {
 		defer err0.Then(&err, nil, nil)
 
+		info := try.To1(e.RequestInfo())
+		if len(info.Body) > 0 && !info.Auth.IsSuperuser() {
+			return apis.NewBadRequestError("只有管理员可以更改信息", nil)
+		}
+
 		order := e.Record
 		if plink := order.Get("payment_link"); plink == "" {
 			names := []string{}
@@ -166,13 +171,7 @@ func initPSC(e *core.ServeEvent) (err error) {
 			order.Set("payment_created_info", pcinfo)
 		}
 
-		info := try.To1(e.RequestInfo())
-		if info.Auth.IsSuperuser() {
-			return e.Next()
-		}
-
-		try.To(e.App.Save(order))
-		return e.JSON(http.StatusOK, order)
+		return e.Next()
 	})
 	e.App.OnRecordDeleteRequest(db.TableOrders).Bind(&hook.Handler[*core.RecordRequestEvent]{
 		Func: func(e *core.RecordRequestEvent) error {
