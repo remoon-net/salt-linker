@@ -59,6 +59,12 @@ func initHooks(se *core.ServeEvent) (err error) {
 		return e.Next()
 	})
 
+	{ // 清理 fake executed
+		q := dbx.HashExp{"executed": fakeExecuted}
+		body := dbx.Params{"executed": ""}
+		try.To1(se.App.DB().Update(db.TableOrderItems, body, q).Execute())
+	}
+
 	go func() {
 		ctx := context.Background()
 		ctx, cancel := context.WithCancel(ctx)
@@ -106,10 +112,24 @@ func initHooks(se *core.ServeEvent) (err error) {
 	return se.Next()
 }
 
+var fakeExecuted, _ = types.ParseDateTime(time.Unix(0, 0))
+
 func execHook(app core.App, pool *sync.Pool, item *core.Record) (err error) {
 	defer err0.Then(&err, nil, nil)
 	vm := pool.Get().(*goja.Runtime)
 	defer pool.Put(vm)
+
+	item = try.To1(app.FindRecordById(db.TableOrderItems, item.Id))
+	if item.GetString("executed") != "" {
+		return nil
+	}
+
+	item.Set("executed", fakeExecuted) // 添加fake executed, 避免 hookjs 中 update order 重复触发 hook
+	try.To(app.Save(item))
+	defer err0.Then(&err, nil, func() {
+		item.Set("executed", "")
+		try.To(app.Save(item))
+	})
 
 	goods := try.To1(app.FindRecordById(db.TableGoods, item.GetString("goods")))
 
