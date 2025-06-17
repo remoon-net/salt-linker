@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/docker/go-units"
 	"github.com/dop251/goja"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
@@ -33,6 +34,7 @@ func initHooks(se *core.ServeEvent) (err error) {
 			vm.Set("$app", se.App)
 
 			vm.Set("GenLicense", GenLicense)
+			vm.Set("bytes2str", bytes2str)
 
 			try.To1(vm.RunProgram(hookjs.AlmondProg))
 			return vm
@@ -178,4 +180,8 @@ func baseBind(vm *goja.Runtime) {
 
 		return instanceValue
 	})
+}
+
+func bytes2str(b float64) string {
+	return units.BytesSize(b)
 }

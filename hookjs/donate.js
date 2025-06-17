@@ -24,12 +24,15 @@ define(() => {
       ex.set("user", item.getString("user"))
       ex.set("order", item.getString("order"))
       ex.set("items", [item.id])
+      let b1 = bytes2str(b)
+      let b2 = bytes2str(b + g)
       ex.set(
         "value",
         JSON.stringify({
-          已发放可用流量到用户帐号中: `发放前: ${b}, 现在: ${b + g}`,
+          已发放可用流量到用户帐号中: `发放前: ${b1}, 现在: ${b2}`,
         })
       )
+      ex.set("remark", `发放前: ${b}, 现在: ${b + g}`)
       tx.save(ex)
       let exs = order.getStringSlice("express")
       exs.push(ex.id)
