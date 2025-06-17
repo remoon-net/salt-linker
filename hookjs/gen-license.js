@@ -37,7 +37,7 @@ define(() => {
       tx.save(ex)
       let exs = order.getStringSlice("express")
       exs.push(ex.id)
-      order.set("ex", exs)
+      order.set("express", exs)
       tx.save(order)
     })
   }
