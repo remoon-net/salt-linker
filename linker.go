@@ -154,8 +154,31 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 	if _, ok := linkers.GetOk(id); ok {
 		return socket.Close(4000+http.StatusLocked, "device is already connected")
 	}
-	linkers.Set(id, &WrapperProxy{ReverseProxy: proxy, Cancel: cacnel})
+	wp := &WrapperProxy{ReverseProxy: proxy, Cancel: cacnel}
+	linkers.Set(id, wp)
 	defer linkers.Remove(id)
+
+	{
+		s := http.NewServeMux()
+		s.HandleFunc("PATCH /direct-link", func(w http.ResponseWriter, r *http.Request) {
+			link := r.FormValue("link")
+			if link == "" {
+				http.Error(w, "link is lost", http.StatusBadRequest)
+				return
+			}
+			if len(link) > 120 {
+				http.Error(w, "link is too large", http.StatusBadRequest)
+				return
+			}
+			if _, err := url.Parse(link); err != nil {
+				http.Error(w, "link parse failed"+err.Error(), http.StatusBadRequest)
+				return
+			}
+			wp.DirectLink = link
+			w.WriteHeader(http.StatusNoContent)
+		})
+		go http.Serve(sess, s)
+	}
 
 	metadata := try.To1(json.Marshal(Metadata{
 		Method:     r.Method,
@@ -210,6 +233,16 @@ func SaltLinkerServe(e *core.RequestEvent) error {
 		e.Response.Header().Set("Upgrade", "websocket")
 		return apis.NewApiError(http.StatusUpgradeRequired, "device is online (only allow websocket connection)", nil)
 	}
+	if proxy.DirectLink != "" {
+		conn, err := websocket.Accept(e.Response, r, &websocket.AcceptOptions{
+			OriginPatterns: []string{"*"},
+			Subprotocols:   []string{"wgortc"},
+		})
+		if err != nil {
+			return apis.NewInternalServerError("redirect websocket accept failed", err)
+		}
+		return conn.Close(3307, proxy.DirectLink)
+	}
 	r.Body = NotRereadable(r.Body)
 	proxy.ServeHTTP(e.Response, r)
 	return nil
@@ -217,7 +250,8 @@ func SaltLinkerServe(e *core.RequestEvent) error {
 
 type WrapperProxy struct {
 	*httputil.ReverseProxy
-	Cancel context.CancelFunc
+	Cancel     context.CancelFunc
+	DirectLink string
 }
 
 type Metadata struct {
