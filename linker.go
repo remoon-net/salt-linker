@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -18,12 +17,15 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/store"
 	"github.com/pocketbase/pocketbase/tools/types"
 	"github.com/shynome/err0"
 	"github.com/shynome/err0/try"
 	"github.com/shynome/websocket"
 	"remoon.net/salt-linker/db"
 )
+
+var linkers = &store.Store[string, *WrapperProxy]{}
 
 func initLinker(se *core.ServeEvent) (err error) {
 	defer err0.Then(&err, nil, nil)
@@ -100,12 +102,9 @@ func initLinker(se *core.ServeEvent) (err error) {
 	se.Router.GET("/api/salt/link/{ep}/{token}", SaltLinker)
 
 	app.OnRecordAfterDeleteSuccess(db.DeviceTable).BindFunc(func(e *core.RecordEvent) error {
-		k := fmt.Sprintf("salt-linker-%s", e.Record.GetString("endpoint"))
-		s, ok := app.Store().GetOk(k)
-		if !ok {
-			return nil
-		}
-		if wp, ok := s.(*WrapperProxy); ok {
+		k := e.Record.GetString("endpoint")
+		wp, ok := linkers.GetOk(k)
+		if ok {
 			wp.Cancel()
 		}
 		return nil
@@ -152,13 +151,11 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 		},
 	}
 
-	store := app.Store()
-	k := fmt.Sprintf("salt-linker-%s", id)
-	if _, ok := store.GetOk(k); ok {
+	if _, ok := linkers.GetOk(id); ok {
 		return socket.Close(4000+http.StatusLocked, "device is already connected")
 	}
-	store.Set(k, &WrapperProxy{ReverseProxy: proxy, Cancel: cacnel})
-	defer store.Remove(k)
+	linkers.Set(id, &WrapperProxy{ReverseProxy: proxy, Cancel: cacnel})
+	defer linkers.Remove(id)
 
 	metadata := try.To1(json.Marshal(Metadata{
 		Method:     r.Method,
@@ -204,8 +201,7 @@ func SaltLinkerServe(e *core.RequestEvent) error {
 	if id == "" {
 		return apis.NewUnauthorizedError("unkown endpoint", nil)
 	}
-	k := fmt.Sprintf("salt-linker-%s", id)
-	p, ok := e.App.Store().GetOk(k)
+	proxy, ok := linkers.GetOk(id)
 	if !ok {
 		return apis.NewApiError(http.StatusServiceUnavailable, "device is offline", nil)
 	}
@@ -213,10 +209,6 @@ func SaltLinkerServe(e *core.RequestEvent) error {
 	if upgrade := r.Header.Get("Upgrade"); !strings.EqualFold(upgrade, "websocket") {
 		e.Response.Header().Set("Upgrade", "websocket")
 		return apis.NewApiError(http.StatusUpgradeRequired, "device is online (only allow websocket connection)", nil)
-	}
-	proxy, ok := p.(*WrapperProxy)
-	if !ok {
-		return apis.NewInternalServerError("there should have a reverse proxy server", nil)
 	}
 	r.Body = NotRereadable(r.Body)
 	proxy.ServeHTTP(e.Response, r)
