@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.0] - 2025-02-12
+
+- 添加支付系统
+- 添加了对 websocket redirect link 的支持
+
 ## [0.2.0] - 2025-02-12
 
 - 添加用户 UI 到 Docker 镜像中
