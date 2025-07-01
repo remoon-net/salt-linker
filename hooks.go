@@ -16,9 +16,9 @@ import (
 	"github.com/pocketbase/pocketbase/tools/types"
 	"github.com/shynome/err0"
 	"github.com/shynome/err0/try"
+	almond "github.com/shynome/goja-almond"
 	"golang.org/x/sync/errgroup"
 	"remoon.net/salt-linker/db"
-	"remoon.net/salt-linker/hookjs"
 )
 
 func initHooks(se *core.ServeEvent) (err error) {
@@ -36,7 +36,7 @@ func initHooks(se *core.ServeEvent) (err error) {
 			vm.Set("GenLicense", GenLicense)
 			vm.Set("bytes2str", bytes2str)
 
-			try.To1(vm.RunProgram(hookjs.AlmondProg))
+			try.To1(almond.Enable(vm))
 			return vm
 		},
 	}
@@ -142,10 +142,10 @@ func execHook(app core.App, pool *sync.Pool, item *core.Record) (err error) {
 	defer r.Close()
 	s := string(try.To1(io.ReadAll(r)))
 
-	s = hookjs.FixAlmondDefine(f, s)
-	try.To1(vm.RunScript(f, s))
+	mod := almond.New(vm)
+	try.To(mod.Define(f, s))
 
-	exports := try.To1(vm.RunString(fmt.Sprintf(`requirejs("%s")`, f)))
+	exports := try.To1(mod.Require(f))
 	callback, ok := goja.AssertFunction(exports)
 	if !ok {
 		return fmt.Errorf("hookjs module.exports must be function")

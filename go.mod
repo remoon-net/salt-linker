@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/avast/retry-go/v4 v4.6.1
 	github.com/docker/go-units v0.5.0
-	github.com/dop251/goja v0.0.0-20250309171923-bcd7cc6bf64c
+	github.com/dop251/goja v0.0.0-20250630131328-58d95d85e994
 	github.com/dop251/goja_nodejs v0.0.0-20250314160716-c55ecee183c0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/yamux v0.1.2
@@ -39,6 +39,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/shynome/goja-almond v0.0.1 // indirect
 	github.com/spf13/cast v1.8.0 // indirect
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect

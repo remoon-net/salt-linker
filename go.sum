@@ -23,6 +23,8 @@ github.com/dop251/base64dec v0.0.0-20231022112746-c6c9f9a96217 h1:16iT9CBDOniJwF
 github.com/dop251/base64dec v0.0.0-20231022112746-c6c9f9a96217/go.mod h1:eIb+f24U+eWQCIsj9D/ah+MD9UP+wdxuqzsdLD+mhGM=
 github.com/dop251/goja v0.0.0-20250309171923-bcd7cc6bf64c h1:mxWGS0YyquJ/ikZOjSrRjjFIbUqIP9ojyYQ+QZTU3Rg=
 github.com/dop251/goja v0.0.0-20250309171923-bcd7cc6bf64c/go.mod h1:MxLav0peU43GgvwVgNbLAj1s/bSGboKkhuULvq/7hx4=
+github.com/dop251/goja v0.0.0-20250630131328-58d95d85e994 h1:aQYWswi+hRL2zJqGacdCZx32XjKYV8ApXFGntw79XAM=
+github.com/dop251/goja v0.0.0-20250630131328-58d95d85e994/go.mod h1:MxLav0peU43GgvwVgNbLAj1s/bSGboKkhuULvq/7hx4=
 github.com/dop251/goja_nodejs v0.0.0-20250314160716-c55ecee183c0 h1:jTwdYTGERaZ/3+glBUVQZV2NwGodd9HlkXJbTBUPLLo=
 github.com/dop251/goja_nodejs v0.0.0-20250314160716-c55ecee183c0/go.mod h1:Tb7Xxye4LX7cT3i8YLvmPMGCV92IOi4CDZvm/V8ylc0=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
@@ -82,6 +84,8 @@ github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 h1:KRzFb2m7YtdldCEkzs6KqmJw4nqEV
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.2/go.mod h1:JXeL+ps8p7/KNMjDQk3TCwPpBy0wYklyWTfbkIzdIFU=
 github.com/shynome/err0 v0.2.1 h1:pzSF+IDP59C94KVQb+zg/ZU8DC1CrIzJNjFQS3XjEvA=
 github.com/shynome/err0 v0.2.1/go.mod h1:n5YVOAf8QSa8LMWWFKCXoHQjAjwjywKFiORV/btN3Aw=
+github.com/shynome/goja-almond v0.0.1 h1:0WnzY7/aL3vlRs+hbRizlQPmYvIVF7wJZMood65LHz4=
+github.com/shynome/goja-almond v0.0.1/go.mod h1:hfHavjEtghhwi7xUgJHELFcDxzLAnas1td5+6/uWSDk=
 github.com/shynome/websocket v1.9.1 h1:ZVi8CJ8cGlujN6VtCfTOpt1iFSsfyqXOb8PYN4Pm5eU=
 github.com/shynome/websocket v1.9.1/go.mod h1:mVk0rPKqfh3oB7ZvhLGgVg0FSA2SHsPqwpxcVu/sSi8=
 github.com/spf13/cast v1.8.0 h1:gEN9K4b8Xws4EX0+a0reLmhq8moKn7ntRlQYgjPeCDk=
