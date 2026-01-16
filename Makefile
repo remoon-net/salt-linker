@@ -1,9 +1,11 @@
+VERSION := $(shell git describe --tags --always --dirty)
+
 build:
-	CGO_ENABLED=0 go build  -ldflags="-X 'main.Version=$$(git describe --tags --always --dirty)' -s -w" -o salt-linker .
+	CGO_ENABLED=0 go build  -ldflags="-X 'main.Version=${VERSION}' -s -w" -o salt-linker .
 docker: build frontend
-	docker build . -t shynome/salt-linker:$$(git describe --tags --always --dirty)
+	docker build . -t shynome/salt-linker:${VERSION}
 push: docker
-	docker push shynome/salt-linker:$$(git describe --tags --always --dirty)
+	docker push shynome/salt-linker:${VERSION}
 frontend:
 	cd ../salt.remoon.net && npm run build && \
 	cd - && \
