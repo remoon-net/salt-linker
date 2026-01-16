@@ -7,5 +7,5 @@ EXPOSE 8090
 COPY salt-linker /app/salt-linker
 COPY pb_public /app/pb_public
 # start PocketBase
-ENTRYPOINT [ "/app/salt-linker", "serve", "--http=0.0.0.0:8090" ]
-CMD []
+ENTRYPOINT [ "/app/salt-linker"]
+CMD [ "serve", "--http=0.0.0.0:8090" ]
