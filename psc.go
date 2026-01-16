@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
-	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/avast/retry-go/v4"
+	"github.com/docker/go-units"
 	"github.com/hashicorp/yamux"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -52,6 +52,8 @@ func initPSC(e *core.ServeEvent) (err error) {
 		return e.Next()
 	}
 
+	m1b := try.To1(units.FromHumanSize(args.Money1Bytes))
+
 	pr := router.NewRouter(func(w http.ResponseWriter, r *http.Request) (*core.RequestEvent, router.EventCleanupFunc) {
 		event := new(core.RequestEvent)
 		event.Response = w
@@ -71,8 +73,8 @@ func initPSC(e *core.ServeEvent) (err error) {
 		}
 		var cbRaw types.JSONRaw = try.To1(json.Marshal(payment))
 		err = retry.Do(func() error {
-			return e.App.RunInTransaction(func(txApp core.App) (err error) {
-				order := try.To1(txApp.FindRecordById(db.TableOrders, id))
+			return e.App.RunInTransaction(func(tx core.App) (err error) {
+				order := try.To1(tx.FindRecordById(db.TableOrders, id))
 				if cb := order.GetString("payment_callbacked_info"); IsEmptyJSON(cb) {
 					order.Set("payment_callbacked_info", cbRaw)
 				} else {
@@ -82,10 +84,18 @@ func initPSC(e *core.ServeEvent) (err error) {
 				closed := slices.Contains(ss, string(db.OrderStatusClosed))
 				paid := slices.Contains(payment.Status, db.PaymentStatusPaid)
 				if closed { // closed order 就单纯存一下回调数据
-					try.To(txApp.Save(order))
+					try.To(tx.Save(order))
 					return nil
 				}
 				if paid {
+					user := try.To1(tx.FindRecordById(db.TableUsers, order.GetString("user")))
+					b := user.GetFloat("remaining_bytes")
+					num := order.GetFloat("value")
+					g := num / 100 * float64(m1b)
+					b = b + g
+					user.Set("remaining_bytes", b)
+					try.To(tx.Save(user))
+
 					ss = append(ss, string(db.OrderStatusPaid))
 					ss = slices.DeleteFunc(ss, func(s string) bool {
 						return s == string(db.OrderStatusWaitPay)
@@ -93,7 +103,7 @@ func initPSC(e *core.ServeEvent) (err error) {
 				}
 				ss = append(ss, string(db.OrderStatusClosed))
 				order.Set("status", ss)
-				try.To(txApp.Save(order))
+				try.To(tx.Save(order))
 				return nil
 			})
 		},
@@ -137,21 +147,10 @@ func initPSC(e *core.ServeEvent) (err error) {
 
 		order := e.Record
 		if plink := order.Get("payment_link"); plink == "" {
-			names := []string{}
-			items := try.To1(e.App.FindRecordsByIds(db.TableOrderItems, order.GetStringSlice("items")))
-			for _, item := range items {
-				goods := try.To1(e.App.FindRecordById(db.TableGoods, item.GetString("goods")))
-				name := goods.GetString("name")
-				num := item.GetInt("num")
-				name = fmt.Sprintf("%s *%d", name, num)
-				names = append(names, name)
-			}
-
-			name := strings.Join(names, "\n")
 			resp, err := phc.R().
 				SetBody(map[string]any{
-					"name":  name,
-					"value": order.GetFloat("value"),
+					"name":  fmt.Sprintf("流量包购买 1元%s", args.Money1Bytes),
+					"value": order.GetInt("value"),
 					"link":  orderLink(e.App, order.Id),
 				}).
 				Post("/payments")

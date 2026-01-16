@@ -13,8 +13,8 @@ import (
 )
 
 var args struct {
-	PSC        string
-	LicenseKey []byte
+	PSC         string
+	Money1Bytes string
 }
 
 func main() {
@@ -23,14 +23,11 @@ func main() {
 	{
 		flags := app.RootCmd.PersistentFlags()
 		flags.StringVar(&args.PSC, "psc", "", "支付中心的接口地址, WebSocket 链接")
-		flags.BytesBase64Var(&args.LicenseKey, "license-key", nil, "生成 license 的 key, base64编码")
+		flags.StringVar(&args.Money1Bytes, "m1b", "1GB", "一块钱能买多少流量")
 	}
 
 	app.OnServe().BindFunc(initLinker)
-	app.OnServe().BindFunc(initLicenses)
-	app.OnServe().BindFunc(initOrders)
 	app.OnServe().BindFunc(initPSC)
-	app.OnServe().BindFunc(initHooks)
 
 	var publicDir string
 	app.RootCmd.PersistentFlags().StringVar(
