@@ -31,4 +31,13 @@ func initUser(app core.App) {
 		e.Record = user
 		return e.Next()
 	})
+	app.OnRecordAuthRefreshRequest(db.TableUsers).BindFunc(func(e *core.RecordAuthRefreshRequestEvent) error {
+		if args.PSC == "" {
+			return e.Next()
+		}
+		ex := e.Record.Expand()
+		ex["psc"] = args.Money1Bytes
+		e.Record.SetExpand(ex)
+		return e.Next()
+	})
 }
