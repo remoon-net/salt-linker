@@ -28,6 +28,7 @@ func main() {
 
 	app.OnServe().BindFunc(initLinker)
 	app.OnServe().BindFunc(initPSC)
+	initUser(app)
 
 	var publicDir string
 	app.RootCmd.PersistentFlags().StringVar(
