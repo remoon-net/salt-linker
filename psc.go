@@ -195,10 +195,11 @@ func initPSC(e *core.ServeEvent) (err error) {
 
 func orderLink(app core.App, id string) string {
 	au, _ := url.Parse(app.Settings().Meta.AppURL)
-	au = au.JoinPath("/users/orders/detail/")
-	q := au.Query()
-	q.Set("id", id)
-	au.RawQuery = q.Encode()
+	au = au.JoinPath("/user/orders/")
+	// q := au.Query()
+	// q.Set("id", id)
+	// au.RawQuery = q.Encode()
+	au.Fragment = "order-" + id
 	r := au.String()
 	return r
 }
