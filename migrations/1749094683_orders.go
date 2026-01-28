@@ -56,6 +56,7 @@ func init() {
 				Hidden: true,
 			},
 		)
+		addUpdatedFields(&orders.Fields)
 		try.To(app.Save(orders))
 
 		return nil
