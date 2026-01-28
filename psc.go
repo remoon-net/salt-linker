@@ -91,7 +91,7 @@ func initPSC(e *core.ServeEvent) (err error) {
 				if paid {
 					user := try.To1(tx.FindRecordById(db.TableUsers, order.GetString("user")))
 					b := user.GetFloat("remaining_bytes")
-					g := user.GetFloat("bytes")
+					g := order.GetFloat("bytes")
 					b = b + g
 					user.Set("remaining_bytes", b)
 					try.To(tx.Save(user))
