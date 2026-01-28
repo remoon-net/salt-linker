@@ -42,7 +42,7 @@ func init() {
 			&core.NumberField{
 				Name: "value", Id: ID("value"), System: true,
 				Required: true,
-				Min:      types.Pointer[float64](0),
+				Min:      types.Pointer[float64](0), OnlyInt: true,
 			},
 			&core.URLField{
 				Name: "payment_link", Id: ID("payment_link"), System: true,
