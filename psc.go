@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -67,7 +68,7 @@ func initPSC(e *core.ServeEvent) (err error) {
 		var payment Payment
 		try.To(e.BindBody(&payment))
 		u := try.To1(url.Parse(payment.Link))
-		id := u.Query().Get("id")
+		id := strings.TrimPrefix(u.Fragment, "order-")
 		if id == "" {
 			return apis.NewBadRequestError("缺少id", nil)
 		}
@@ -165,6 +166,7 @@ func initPSC(e *core.ServeEvent) (err error) {
 
 			plink := resp.Header().Get("Location")
 			order.Set("payment_link", plink)
+			order.Set("status", []string{string(db.OrderStatusWaitPay)})
 			var pcinfo types.JSONRaw
 			pcinfo = try.To1(json.Marshal(payment))
 			order.Set("payment_created_info", pcinfo)
