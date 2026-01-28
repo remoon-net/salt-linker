@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/shynome/err0/try"
-	_ "remoon.net/salt-linker/migrations"
+	_ "remoon.net/salt-linker/db/migrations"
 )
 
 var args struct {
