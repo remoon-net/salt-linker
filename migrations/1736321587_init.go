@@ -76,7 +76,7 @@ func init() {
 			},
 			&core.TextField{
 				Id: "__name__", Name: "name", System: true,
-				Required:    true,
+				Required:    false,
 				Max:         200,
 				Presentable: true,
 			},
