@@ -91,8 +91,7 @@ func initPSC(e *core.ServeEvent) (err error) {
 				if paid {
 					user := try.To1(tx.FindRecordById(db.TableUsers, order.GetString("user")))
 					b := user.GetFloat("remaining_bytes")
-					num := order.GetFloat("value")
-					g := num / 100 * float64(m1b)
+					g := user.GetFloat("bytes")
 					b = b + g
 					user.Set("remaining_bytes", b)
 					try.To(tx.Save(user))
@@ -138,6 +137,13 @@ func initPSC(e *core.ServeEvent) (err error) {
 		retry.MaxDelay(20*time.Second),
 	)
 
+	e.App.OnRecordCreateRequest(db.TableOrders).BindFunc(func(e *core.RecordRequestEvent) (err error) {
+		order := e.Record
+		num := order.GetFloat("value")
+		g := num / 100 * float64(m1b)
+		order.Set("bytes", g)
+		return e.Next()
+	})
 	e.App.OnRecordUpdateRequest(db.TableOrders).BindFunc(func(e *core.RecordRequestEvent) (err error) {
 		defer err0.Then(&err, nil, nil)
 
@@ -148,9 +154,11 @@ func initPSC(e *core.ServeEvent) (err error) {
 
 		order := e.Record
 		if plink := order.Get("payment_link"); plink == "" {
+			g := order.GetFloat("bytes")
+			s := units.HumanSize(g)
 			resp, err := phc.R().
 				SetBody(map[string]any{
-					"name":  fmt.Sprintf("流量包购买 1元%s", args.Money1Bytes),
+					"name":  fmt.Sprintf("购买流量包: %s", s),
 					"value": order.GetInt("value"),
 					"link":  orderLink(e.App, order.Id),
 				}).

@@ -44,6 +44,11 @@ func init() {
 				Required: true,
 				Min:      types.Pointer[float64](0), OnlyInt: true,
 			},
+			&core.NumberField{
+				Name: "bytes", Id: ID("bytes"), System: true,
+				Required: false,
+				OnlyInt:  true,
+			},
 			&core.URLField{
 				Name: "payment_link", Id: ID("payment_link"), System: true,
 			},
