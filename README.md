@@ -1,7 +1,7 @@
 # 自行部署
 
 ```sh
-docker run --name salt-linker -p 8090:8090 shynome/salt-linker:v0.2.0
+docker run --name salt-linker -p 8090:8090 shynome/salt-linker:v0.5.0
 # 创建管理员用户. root@redacted-ip.invalid 是邮箱,  rootroot 是密码, 更换为你喜欢的值
 docker exec -ti salt-linker /app/salt-linker superuser create root@redacted-ip.invalid rootroot
 ```
@@ -12,4 +12,4 @@ docker exec -ti salt-linker /app/salt-linker superuser create root@redacted-ip.i
 
 # Todo
 
-- [ ] 计费充值系统
+- [x] 计费充值系统
