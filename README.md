@@ -9,7 +9,7 @@ salt-linker 是服务于 [well-net](https://github.com/remoon-net/well) 的信�
 ## docker 运行
 
 ```sh
-docker run --name salt-linker -p 8090:8090 shynome/salt-linker:v0.5.0
+docker run --name salt-linker -p 8090:8090 shynome/salt-linker:v0.6.0
 # 创建管理员用户. root@redacted-ip.invalid 是邮箱,  rootroot 是密码, 更换为你喜欢的值
 docker exec -ti salt-linker /app/salt-linker superuser create root@redacted-ip.invalid rootroot
 ```
