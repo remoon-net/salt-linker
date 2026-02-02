@@ -6,4 +6,6 @@ const (
 	TableConnections = "connections"
 
 	TableOrders = "orders"
+
+	TableInstallerFiles = "installer_files"
 )
