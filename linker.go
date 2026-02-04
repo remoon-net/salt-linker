@@ -119,7 +119,7 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 	w := e.Response
 	socket := try.To1(websocket.Accept(w, r, &websocket.AcceptOptions{
 		OriginPatterns: []string{"*"},
-		Subprotocols:   []string{"link"},
+		Subprotocols:   []string{"wshttp", "link"},
 	}))
 	id := r.PathValue("ep")
 	if id == "" {
