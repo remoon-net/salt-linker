@@ -154,7 +154,11 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 	if _, ok := linkers.GetOk(id); ok {
 		return socket.Close(4000+http.StatusLocked, "device is already connected")
 	}
-	wp := &WrapperProxy{ReverseProxy: proxy, Cancel: cacnel}
+	wp := &WrapperProxy{
+		ReverseProxy: proxy,
+		Cancel:       cacnel,
+		User:         ep.User,
+	}
 	linkers.Set(id, wp)
 	defer linkers.Remove(id)
 
@@ -207,14 +211,20 @@ func SaltLinker(e *core.RequestEvent) (err error) {
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(5 * time.Second):
+			case <-time.After(time.Hour):
 				connection.Set("transmit_bytes", rwc.Count())
 				app.Save(connection)
 			}
 		}
 	}()
 
-	<-sess.CloseChan()
+	// 每7天20小时强制关闭一次进行结算
+	t := time.NewTimer(7*24*time.Hour + 20*time.Hour)
+	defer t.Stop()
+	select {
+	case <-t.C:
+	case <-sess.CloseChan():
+	}
 	return nil
 }
 
@@ -227,6 +237,13 @@ func SaltLinkerServe(e *core.RequestEvent) error {
 	proxy, ok := linkers.GetOk(id)
 	if !ok {
 		return apis.NewApiError(http.StatusServiceUnavailable, "device is offline", nil)
+	}
+	if args.PSC != "" {
+		var user db.User
+		try.To(e.App.ModelQuery(&user).Where(dbx.HashExp{"id": proxy.User}).One(&user))
+		if user.RemainingBytes <= 0 {
+			return apis.NewApiError(http.StatusPaymentRequired, "device is in arrears", nil)
+		}
 	}
 	// 只允许 WebScoket 连接
 	if upgrade := r.Header.Get("Upgrade"); !strings.EqualFold(upgrade, "websocket") {
@@ -250,6 +267,7 @@ func SaltLinkerServe(e *core.RequestEvent) error {
 
 type WrapperProxy struct {
 	*httputil.ReverseProxy
+	User       string
 	Cancel     context.CancelFunc
 	DirectLink string
 }
