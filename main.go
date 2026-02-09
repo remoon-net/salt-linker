@@ -42,7 +42,7 @@ func bindInstallerFiles(e *core.ServeEvent) error {
 		h := e.Response.Header()
 		h.Set("Cache-Control", "public, max-age=60")
 
-		platforms := []string{"guide", "windows", "android", "linux"}
+		platforms := []string{"guide", "server", "windows", "android", "linux"}
 		sf := filepath.Join(e.App.DataDir(), "supported_platforms.json")
 		if b, err := os.ReadFile(sf); err == nil {
 			_ = json.Unmarshal(b, &platforms)
